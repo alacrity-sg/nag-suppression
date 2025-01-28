@@ -18,7 +18,7 @@ export interface NagSuppressionProps {
 }
 
 
-export class NagSupression {
+export class NagSuppression {
     private readonly suppressions: SuppressionSchemaType;
     public constructor(properties: NagSuppressionProps) {
         if (!properties.path && !properties.data) {
