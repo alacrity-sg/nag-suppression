@@ -3,7 +3,7 @@ import { IConstruct } from "constructs";
 import * as fs from "fs";
 import { z } from "zod";
 
-const SuppressionSchema = z.record(z.string().regex(/^(\/[^/]+)+(?:\/Resource)?$/), z.object({
+const SuppressionSchema = z.record(z.string(), z.object({
     rules_to_suppress: z.array(z.object({
         id: z.string(),
         reason: z.string(),
@@ -35,9 +35,7 @@ export class NagSuppression {
             if (!fs.existsSync(properties.path)){
                 throw new Error("Suppression file does not exist");
             }
-            const fileData = fs.readFileSync(properties.path, "utf-8");
-            this.validateJson(fileData);
-            data = fileData;
+            data = fs.readFileSync(properties.path, "utf-8");
         } else if (properties.data){
             data = properties.data;
         } else {
@@ -50,19 +48,17 @@ export class NagSuppression {
         this.suppressions = parsedData.data;
 
     }
-    private validateJson(data: string): void {
-        SuppressionSchema.parse(JSON.parse(data));
-    }
 
     public visit(node: IConstruct): void {
         const nodePath = `/${node.node.path}`;
         const suppression = this.suppressions[nodePath];
         if (suppression) {
-            (node as CfnResource).addMetadata("cfn_nag", suppression);
+            (node as CfnResource).addMetadata("cdk_nag", suppression);
+            return;
         }
         const matchedRecord = Object.keys(this.suppressions).find((key: string) => {
             try {
-                return nodePath.match(new RegExp(key));
+                return nodePath.match(key);
             } catch (e) {
                 return false;
             }
@@ -70,7 +66,6 @@ export class NagSuppression {
         if (!matchedRecord) {
             return;
         }
-        console.log(this.suppressions[matchedRecord]);
         (node as CfnResource).addMetadata("cdk_nag", this.suppressions[matchedRecord]);
     }
 }
