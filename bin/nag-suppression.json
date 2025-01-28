@@ -4,6 +4,10 @@
             {
                 "id": "AwsSolutions-S1",
                 "reason": "This is a test suppression"
+            },
+            {
+                "id": "AwsSolutions-S10",
+                "reason": "This is a test suppression"
             }
         ]
     }
