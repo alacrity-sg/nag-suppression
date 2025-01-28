@@ -71,6 +71,6 @@ export class NagSuppression {
             return;
         }
         console.log(this.suppressions[matchedRecord]);
-        (node as CfnResource).addMetadata("cfn_nag", this.suppressions[matchedRecord]);
+        (node as CfnResource).addMetadata("cdk_nag", this.suppressions[matchedRecord]);
     }
 }
