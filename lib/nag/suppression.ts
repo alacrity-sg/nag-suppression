@@ -3,15 +3,8 @@ import { IConstruct } from "constructs";
 import * as fs from "fs";
 import { z } from "zod";
 import { parse } from "yaml";
-
-const SuppressionSchema = z.record(z.string(), z.object({
-    rules_to_suppress: z.array(z.object({
-        id: z.string(),
-        reason: z.string(),
-        error: z.string().optional()
-    }))
-}))
-type SuppressionSchemaType = z.infer<typeof SuppressionSchema>;
+import * as path from "path";
+import {SuppressionSchema, SuppressionSchemaType, WhitelistSchema, WhitelistSchemaType} from "./suppression-interface";
 
 export interface NagSuppressionProps {
     path?: string;
@@ -21,6 +14,7 @@ export interface NagSuppressionProps {
 
 export class NagSuppression {
     private readonly suppressions: SuppressionSchemaType;
+    private readonly whitelist: WhitelistSchemaType | undefined;
     public constructor(properties: NagSuppressionProps) {
         if (!properties.path && !properties.data) {
             throw new Error("Either path or data must be provided");
@@ -30,17 +24,7 @@ export class NagSuppression {
         }
         let data: string;
         if (properties.path){
-            if (!properties.path.endsWith(".json") && !properties.path.endsWith(".yaml") && !properties.path.endsWith(".yml")) {
-                throw new Error("Suppression file must be a JSON or YAML file");
-            }
-            if (!fs.existsSync(properties.path)){
-                throw new Error("Suppression file does not exist");
-            }
-            if (properties.path.endsWith(".json")) {
-                data = fs.readFileSync(properties.path, "utf-8");
-            } else {
-                data = JSON.stringify(parse(fs.readFileSync(properties.path, "utf-8")));
-            }
+            data = this.loadDataFromPath(properties.path);
         } else if (properties.data){
             data = properties.data;
         } else {
@@ -52,6 +36,35 @@ export class NagSuppression {
         }
         this.suppressions = parsedData.data;
 
+        // Load Config
+        const whitelistFile = fs.readdirSync(path.join(__dirname, "..", "..")).find(file => {
+            return file === "whitelist.json" || file === "whitelist.yml" || file === "whitelist.yaml";
+        })
+        if (whitelistFile) {
+            const whitelistData = this.loadDataFromPath(path.join(__dirname, "..", "..", whitelistFile));
+            const parsedWhitelistData = WhitelistSchema.safeParse(JSON.parse(whitelistData));
+            if (!parsedWhitelistData.success){
+                throw new Error("Unable to load whitelist data from file. Invalid schema");
+            }
+            this.whitelist = parsedWhitelistData.data;
+        }
+
+
+    }
+    private loadDataFromPath(filePath: string): string {
+        let data: string;
+        if (!filePath.endsWith(".json") && !filePath.endsWith(".yaml") && !filePath.endsWith(".yml")) {
+            throw new Error("Suppression file must be a JSON or YAML file");
+        }
+        if (!fs.existsSync(filePath)){
+            throw new Error("Suppression file does not exist");
+        }
+        if (filePath.endsWith(".json")) {
+            data = fs.readFileSync(filePath, "utf-8");
+        } else {
+            data = JSON.stringify(parse(fs.readFileSync(filePath, "utf-8")));
+        }
+        return data;
     }
 
     public visit(node: IConstruct): void {

@@ -1,0 +1,8 @@
+{
+  "rules_to_suppress": [
+    {
+      "id": "AwsSolutions-S1",
+      "reason": "This is a test suppression"
+    }
+  ]
+}
