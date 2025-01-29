@@ -2,6 +2,7 @@ import { CfnResource } from "aws-cdk-lib";
 import { IConstruct } from "constructs";
 import * as fs from "fs";
 import { z } from "zod";
+import { parse } from "yaml";
 
 const SuppressionSchema = z.record(z.string(), z.object({
     rules_to_suppress: z.array(z.object({
@@ -29,13 +30,17 @@ export class NagSuppression {
         }
         let data: string;
         if (properties.path){
-            if (!properties.path.endsWith(".json")){
-                throw new Error("Suppression file must be a JSON file");
+            if (!properties.path.endsWith(".json") && !properties.path.endsWith(".yaml") && !properties.path.endsWith(".yml")) {
+                throw new Error("Suppression file must be a JSON or YAML file");
             }
             if (!fs.existsSync(properties.path)){
                 throw new Error("Suppression file does not exist");
             }
-            data = fs.readFileSync(properties.path, "utf-8");
+            if (properties.path.endsWith(".json")) {
+                data = fs.readFileSync(properties.path, "utf-8");
+            } else {
+                data = JSON.stringify(parse(fs.readFileSync(properties.path, "utf-8")));
+            }
         } else if (properties.data){
             data = properties.data;
         } else {
