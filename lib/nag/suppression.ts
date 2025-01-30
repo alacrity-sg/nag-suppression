@@ -11,7 +11,6 @@ export interface NagSuppressionProps {
     data?: string;
 }
 
-
 export class NagSuppression {
     private readonly suppressions: SuppressionSchemaType;
     private readonly whitelist: WhitelistSchemaType | undefined;
@@ -48,8 +47,6 @@ export class NagSuppression {
             }
             this.whitelist = parsedWhitelistData.data;
         }
-
-
     }
     private loadDataFromPath(filePath: string): string {
         let data: string;
@@ -69,6 +66,14 @@ export class NagSuppression {
 
     public visit(node: IConstruct): void {
         const nodePath = `/${node.node.path}`;
+        // Add Whitelist suppression
+        if (this.whitelist) {
+            if (nodePath !== "/Tree" && nodePath !== "/") {
+                if (nodePath.split("/").length === 2 ) {
+                    (node as CfnResource).addMetadata("cdk_nag", this.whitelist);
+                }
+            }
+        }
         const suppression = this.suppressions[nodePath];
         if (suppression) {
             (node as CfnResource).addMetadata("cdk_nag", suppression);
