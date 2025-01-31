@@ -3,6 +3,7 @@ import { IConstruct } from "constructs";
 import {Aspects, CfnResource} from "aws-cdk-lib";
 import * as cdk from "aws-cdk-lib";
 import {Template} from "aws-cdk-lib/assertions";
+import {SuppressionSchemaType} from "../lib/nag";
 
 describe('NagSuppression', () => {
     test("When visiting a node, it should add metadata if the node path is in the suppressions", () => {
@@ -75,3 +76,50 @@ describe('NagSuppression', () => {
         });
     });
 });
+
+describe("NagSuppression.visit", () => {
+    const suppressionRule = {
+        rules_to_suppress: [
+            { id: "AwsSolutions-S1", reason: "Test reason" }
+        ]
+    }
+    test("When visiting a node, it should add metadata if the node path is in the suppressions", () => {
+        // Arrange
+        const resource = "/MyStack/MyResource"
+        const input: SuppressionSchemaType = {};
+        input[resource] = suppressionRule;
+        const mockedMetadata = jest.fn();
+        const mockedNode: IConstruct & CfnResource = {
+            node: {
+                path: resource
+            },
+            addMetadata: mockedMetadata
+        } as unknown as IConstruct & CfnResource;
+        // Act
+        const targetClass = new NagSuppression({ data: JSON.stringify(input)});
+        targetClass.visit(mockedNode)
+        // Assert
+        expect(mockedMetadata).toHaveBeenCalledWith("cdk_nag", suppressionRule);
+        expect(mockedMetadata).toHaveBeenCalledTimes(1);
+    });
+    test("When visiting a node with regex, it should add metadata if the node path matches the regex", () => {
+        // Arrange
+        const resource = "/MyStack/A0219410123081284AEE/Resource"
+        const regexResource = "/MyStack/\\w+/Resource"
+        const input: SuppressionSchemaType = {};
+        input[regexResource] = suppressionRule;
+        const mockedMetadata = jest.fn();
+        const mockedNode: IConstruct & CfnResource = {
+            node: {
+                path: resource
+            },
+            addMetadata: mockedMetadata
+        } as unknown as IConstruct & CfnResource;
+        // Act
+        const targetClass = new NagSuppression({ data: JSON.stringify(input)});
+        targetClass.visit(mockedNode)
+        // Assert
+        expect(mockedMetadata).toHaveBeenCalledWith("cdk_nag", suppressionRule);
+        expect(mockedMetadata).toHaveBeenCalledTimes(1);
+    });
+})
