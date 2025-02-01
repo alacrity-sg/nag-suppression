@@ -1,11 +1,11 @@
-import { NagSuppression } from "../lib/nag/suppression";
+import { CustomAwsSolutions } from "../lib/nag";
 import { IConstruct } from "constructs";
 import {Aspects, CfnResource} from "aws-cdk-lib";
 import * as cdk from "aws-cdk-lib";
 import {Template} from "aws-cdk-lib/assertions";
 import {SuppressionSchemaType} from "../lib/nag";
 
-describe('NagSuppression', () => {
+describe('CustomAwsSolutions', () => {
     test("When visiting a node, it should add metadata if the node path is in the suppressions", () => {
         // Arrange
         const suppressionRule = {
@@ -19,7 +19,7 @@ describe('NagSuppression', () => {
 
         // Act
         const app = new cdk.App();
-        Aspects.of(app).add(new NagSuppression({ data: suppressionData }));
+        Aspects.of(app).add(new CustomAwsSolutions({ data: suppressionData }));
         const stack = new cdk.Stack(app, "MyTestStack");
         new cdk.aws_s3.Bucket(stack, "MyFirstBucket", {
             bucketName: "my-first-bucket",
@@ -53,7 +53,7 @@ describe('NagSuppression', () => {
 
         // Act
         const app = new cdk.App();
-        Aspects.of(app).add(new NagSuppression({ data: suppressionData }));
+        Aspects.of(app).add(new CustomAwsSolutions({ data: suppressionData }));
         const stack = new cdk.Stack(app, "MyTestStack");
         new cdk.aws_s3.Bucket(stack, "MyFirstBucket", {
             bucketName: "my-first-bucket",
@@ -77,7 +77,7 @@ describe('NagSuppression', () => {
     });
 });
 
-describe("NagSuppression.visit", () => {
+describe("CustomAwsSolutions.visit", () => {
     const suppressionRule = {
         rules_to_suppress: [
             { id: "AwsSolutions-S1", reason: "Test reason" }
@@ -96,7 +96,7 @@ describe("NagSuppression.visit", () => {
             addMetadata: mockedMetadata
         } as unknown as IConstruct & CfnResource;
         // Act
-        const targetClass = new NagSuppression({ data: JSON.stringify(input)});
+        const targetClass = new CustomAwsSolutions({ data: JSON.stringify(input)});
         targetClass.visit(mockedNode)
         // Assert
         expect(mockedMetadata).toHaveBeenCalledWith("cdk_nag", suppressionRule);
@@ -116,7 +116,7 @@ describe("NagSuppression.visit", () => {
             addMetadata: mockedMetadata
         } as unknown as IConstruct & CfnResource;
         // Act
-        const targetClass = new NagSuppression({ data: JSON.stringify(input)});
+        const targetClass = new CustomAwsSolutions({ data: JSON.stringify(input)});
         targetClass.visit(mockedNode)
         // Assert
         expect(mockedMetadata).toHaveBeenCalledWith("cdk_nag", suppressionRule);

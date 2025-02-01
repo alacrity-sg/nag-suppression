@@ -10,4 +10,4 @@ import {CustomAwsSolutions} from "../lib/nag";
 const app = new cdk.App();
 new PocNagStack(app, 'PocNagStack', {});
 Aspects.of(app).add(new NagSuppression({ path: resolve(__dirname, '../bin/nag-suppression.yaml')}));
-Aspects.of(app).add(new CustomAwsSolutions());
+Aspects.of(app).add(new CustomAwsSolutions({ path: resolve(__dirname, '../bin/nag-suppression.json')}));
